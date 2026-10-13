@@ -1,0 +1,30 @@
+name: Publicar Oraciones Automático
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+    - cron: '0 18 * * *'
+    - cron: '30 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - env:
+          PAGE_ID: ${{ secrets.PAGE_ID }}
+          PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
+        run: |
+          HORA=$(date -u +%H)
+          if [ "$HORA" = "12" ]; then
+            python bot_seguro.py manana
+          elif [ "$HORA" = "18" ]; then
+            python bot_seguro.py tarde
+          else
+            python bot_seguro.py noche
+          fi
