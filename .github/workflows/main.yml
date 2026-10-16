@@ -1,3 +1,4 @@
+- run: ls -lh *.mp4 *.png
 name: Publicar Oraciones Automático
 on:
   schedule:
