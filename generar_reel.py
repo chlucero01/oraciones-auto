@@ -1,64 +1,36 @@
 from gtts import gTTS
-from moviepy.editor import AudioFileClip, ColorClip, CompositeVideoClip, ImageClip
 from PIL import Image, ImageDraw, ImageFont
-import textwrap
-import numpy as np
+import textwrap, subprocess, os, random
 
-def crear_imagen_texto(texto, size=(1080,1920)):
-    # Fondo oscuro
-    img = Image.new('RGB', size, (15, 23, 42))
+ORACIONES = [
+    "Señor, al caer la noche te entrego mis preocupaciones, mis alegrías y mi familia. Gracias por este día. Dame descanso y paz. Amén.",
+    "Padre amado, gracias por tu protección hoy. En tus manos dejo mi noche y mi descanso. Amén."
+]
+
+def crear_imagen(texto, salida="fondo.png"):
+    img = Image.new('RGB', (1080,1920), (15,23,42))
     draw = ImageDraw.Draw(img)
+    try: font = ImageFont.truetype("DejaVuSans-Bold.ttf", 65)
+    except: font = ImageFont.load_default()
+    t = "\n".join(textwrap.wrap(texto, width=22))
+    bbox = draw.multiline_textbbox((0,0), t, font=font, align="center", spacing=15)
+    x = (1080-(bbox[2]-bbox[0]))//2
+    y = (1920-(bbox[3]-bbox[1]))//2
+    draw.multiline_text((x+4,y+4), t, font=font, fill=(0,0,0,180), align="center", spacing=15)
+    draw.multiline_text((x,y), t, font=font, fill="white", align="center", spacing=15)
+    img.save(salida)
 
-    # Intentar cargar fuente grande, si no usa la default
-    try:
-        font = ImageFont.truetype("DejaVuSans-Bold.ttf", 68)
-    except:
-        font = ImageFont.load_default()
+def crear_reel(oracion=None, salida="reel.mp4"):
+    if not oracion: oracion = random.choice(ORACIONES)
+    crear_imagen(oracion, "fondo.png")
+    gTTS(oracion, lang='es').save("voz.mp3")
 
-    # Envolver texto
-    lineas = textwrap.wrap(texto, width=22)
-    texto_envuelto = "\n".join(lineas)
-
-    # Calcular centro
-    bbox = draw.multiline_textbbox((0,0), texto_envuelto, font=font, align="center", spacing=15)
-    w = bbox[2] - bbox[0]
-    h = bbox[3] - bbox[1]
-    x = (size[0] - w)//2
-    y = (size[1] - h)//2
-
-    # Sombra + texto blanco
-    draw.multiline_text((x+4, y+4), texto_envuelto, font=font, fill=(0,0,0,180), align="center", spacing=15)
-    draw.multiline_text((x, y), texto_envuelto, font=font, fill="white", align="center", spacing=15)
-
-    return np.array(img)
-
-def crear_reel(oracion, salida="reel.mp4"):
-    # 1. Crear voz en español
-    print("Creando voz...")
-    tts = gTTS(text=oracion, lang='es', slow=False)
-    tts.save("voz.mp3")
-    audio_voz = AudioFileClip("voz.mp3")
-
-    duracion = audio_voz.duration + 1.2
-
-    # 2. Fondo animado simple (zoom lento)
-    fondo_img = crear_imagen_texto(oracion)
-    fondo_clip = ImageClip(fondo_img, duration=duracion)
-    # efecto zoom lento para que se vea animado
-    fondo_clip = fondo_clip.resize(lambda t: 1 + 0.03*t)
-    fondo_clip = fondo_clip.set_position(('center','center'))
-
-    # Fondo base de color para rellenar
-    base = ColorClip(size=(1080,1920), color=(15,23,42), duration=duracion)
-
-    video = CompositeVideoClip([base, fondo_clip], size=(1080,1920))
-    video = video.set_audio(audio_voz)
-
-    print(f"Exportando {salida}...")
-    video.write_videofile(salida, fps=24, codec='libx264', audio_codec='aac')
-    print("Listo!")
-    return salida
+    if os.path.exists("musica.mp3"):
+        cmd = ["ffmpeg","-y","-loop","1","-i","fondo.png","-i","voz.mp3","-i","musica.mp3","-filter_complex","[1:a]volume=1.0;[2:a]volume=0.15;amix=inputs=2:duration=longest[a]","-map","0:v","-map","[a]","-c:v","libx264","-t","12","-pix_fmt","yuv420p","-vf","scale=1080:1920","-shortest",salida]
+    else:
+        cmd = ["ffmpeg","-y","-loop","1","-i","fondo.png","-i","voz.mp3","-c:v","libx264","-t","12","-pix_fmt","yuv420p","-vf","scale=1080:1920","-shortest",salida]
+    subprocess.run(cmd, check=True)
+    print(f"Listo {salida}")
 
 if __name__ == "__main__":
-    oracion_prueba = "Señor, en este día te pido paz para mi corazón y para mi familia. Amén."
-    crear_reel(oracion_prueba)
+    crear_reel()
