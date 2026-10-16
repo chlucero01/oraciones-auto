@@ -19,7 +19,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
-          pip install requests moviepy==1.0.3 gTTS Pillow imageio-ffmpeg
+          python -m pip install --upgrade pip
+          python -m pip install requests moviepy==1.0.3 gTTS Pillow imageio imageio-ffmpeg
       - env:
           PAGE_ID: ${{ secrets.PAGE_ID }}
           PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
