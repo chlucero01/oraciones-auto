@@ -1,35 +1,7 @@
-name: Publicar Oraciones Automático
-on:
-  schedule:
-    - cron: '0 12 * * *'
-    - cron: '0 18 * * *'
-    - cron: '30 1 * * *'
-  workflow_dispatch:
-jobs:
-  publicar:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Instalar dependencias
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
-          python -m pip install --upgrade pip
-          python -m pip install requests gTTS Pillow mutagen
-      - name: Generar Reel y verificar
-        run: |
-          python generar_reel.py
-          echo "--- Archivos creados ---"
-          ls -lh *.mp4 *.png || echo "No se creó mp4"
-        env:
-          PAGE_ID: ${{ secrets.PAGE_ID }}
-          PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
       - name: Publicar Reel
         run: |
-          python publicar_reel.py reel.mp4 "Oración de la Noche 🙏 #oracion #noche"
+          CAPTION=$(cat caption.txt)
+          python publicar_reel.py reel.mp4 "$CAPTION"
         env:
           PAGE_ID: ${{ secrets.PAGE_ID }}
           PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
