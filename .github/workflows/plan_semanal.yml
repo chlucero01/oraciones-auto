@@ -1,0 +1,21 @@
+name: Crear Plan Semanal
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Cada domingo 00:00 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: python generar_plan_semanal.py
+      - run: |
+          git config user.name "Bot Oraciones"
+          git config user.email "bot@oraciones.com"
+          git add plan_semanal.json
+          git commit -m "Nuevo plan semanal $(date +%Y-%m-%d)" || echo "Sin cambios"
+          git push
