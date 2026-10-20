@@ -7,35 +7,33 @@ on:
     - cron: '30 1 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   publicar:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
+
+      - name: Instalar ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Instalar dependencias
-        run: |
-          pip install gTTS Pillow requests pytz
+        run: pip install gTTS Pillow requests pytz
 
-      - name: Verificar plan semanal
+      - name: Verificar plan
         run: |
           if [ ! -f plan_semanal.json ]; then
-            echo "No hay plan, creando uno..."
             python generar_plan_semanal.py
           fi
           cat plan_semanal.json
 
       - name: Generar Reel
-        run: |
-          python generar_reel.py
+        run: python generar_reel.py
 
       - name: Publicar Reel
         run: |
