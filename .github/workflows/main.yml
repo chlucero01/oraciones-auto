@@ -23,7 +23,7 @@ jobs:
 
       - name: Instalar dependencias
         run: |
-          pip install Pillow gtts requests
+          pip install gTTS Pillow requests pytz
 
       - name: Verificar plan semanal
         run: |
